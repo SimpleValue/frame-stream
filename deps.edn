@@ -1,0 +1,15 @@
+{:aliases {}
+
+ :paths ["src/clj" "resources" "classes"]
+
+ :deps {org.clojure/clojure {:mvn/version "1.10.0"}
+
+        ring/ring-core {:mvn/version "1.8.2"}
+
+        babashka/babashka.process {:git/url "https://github.com/babashka/babashka.process"
+                                   :sha "249ddcfd1a5825f33adacc9cfde72a0c3823bdc9"}
+        cheshire/cheshire {:mvn/version "5.10.0"}
+
+        com.google.guava/guava {:mvn/version "30.0-jre"}
+        }
+ }
