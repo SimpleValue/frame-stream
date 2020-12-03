@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+TAG=simplevalue/frame-stream:"$(date -u +%Y%m%d%H%M%S)"
+
+docker build -t $TAG .
+
+docker push $TAG

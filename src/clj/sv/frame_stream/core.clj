@@ -91,6 +91,20 @@
 (defonce state
   (atom nil))
 
+(defn add-cors-header
+  [response]
+  (update-in response
+             [:headers]
+             assoc
+             "Access-Control-Allow-Origin"
+             "*"
+             "Access-Control-Allow-Headers"
+             "content-type"))
+
+(defn emit!
+  [message]
+  (prn message))
+
 (defn start-handler
   [request]
   (when (and (= (:request-method request)
@@ -99,7 +113,8 @@
                 "/frame-stream/start"))
     (let [params (json/parse-string (slurp (:body request))
                                     true)
-          ffprobe-result (ffprobe/ffprobe (:url params))
+          ffprobe-result (ffprobe/ffprobe emit!
+                                          (:url params))
           uuid (java.util.UUID/randomUUID)
           video-metadata (extract-video-metadata ffprobe-result)]
       (swap! state
@@ -107,13 +122,14 @@
              [:ffmpeg-processes
               uuid]
              (merge
-               video-metadata
-               (ffmpeg! (merge params
-                               video-metadata))))
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (json/generate-string (assoc (extract-video-metadata ffprobe-result)
-                                          :uuid (str uuid)))})))
+              video-metadata
+              (ffmpeg! (merge params
+                              video-metadata))))
+      (-> {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (json/generate-string (assoc (extract-video-metadata ffprobe-result)
+                                              :uuid (str uuid)))}
+          (add-cors-header)))))
 
 (defn next-frame-handler
   [request]
@@ -124,9 +140,9 @@
     (let [request* (m/assoc-query-params request
                                          "UTF-8")
           uuid (java.util.UUID/fromString
-                 (get-in request*
-                         [:query-params
-                          "uuid"]))]
+                (get-in request*
+                        [:query-params
+                         "uuid"]))]
       (when-let [ffmpeg-process (get-in @state
                                         [:ffmpeg-processes
                                          uuid])]
@@ -137,16 +153,25 @@
             (do
               (swap! state update :ffmpeg-processes dissoc uuid)
               nil)
-            {:status 200
-             :headers {"Content-Type" "application/octet-stream"}
-             :body frame-bytes}))))))
+            (-> {:status 200
+                 :headers {"Content-Type" "application/octet-stream"}
+                 :body frame-bytes}
+                (add-cors-header))))))))
+
+(defn cors-preflight-handler
+  [request]
+  (when (= (:request-method request)
+           :options)
+    (-> {:status 200}
+        (add-cors-header))))
 
 (defn ring-handler
   [request]
   (some
     (fn [handler]
       (handler request))
-    [start-handler
+    [cors-preflight-handler
+     start-handler
      next-frame-handler]))
 
 (comment

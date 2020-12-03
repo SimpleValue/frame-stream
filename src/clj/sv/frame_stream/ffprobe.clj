@@ -11,21 +11,27 @@
 (defn ffprobe
   "Invokes ffprobe on the given `input` (File or URL string) and returns
    the ffprobe output as a clojure map."
-  [input]
+  [emit input]
   (let [input* (if (instance? java.io.File
                               input)
                  (.getAbsolutePath input)
-                 input)]
-    (let [shell-result (sh/sh
-                         "ffprobe"
-                         "-v"
-                         "quiet"
-                         "-print_format"
-                         "json"
-                         "-show_format"
-                         "-show_streams"
-                         input*)]
+                 input)
+        args ["ffprobe"
+              "-v"
+              "quiet"
+              "-print_format"
+              "json"
+              "-show_format"
+              "-show_streams"
+              input*]]
+    (emit {:message/type :sv.frame-stream/ffprobe
+           :args args})
+    (let [shell-result (apply sh/sh
+                              args)]
       (when (not= (:exit shell-result) 0)
+        (emit {:message/type :sv.frame-stream/ffprobe-failed
+               :args args
+               :shell-result shell-result})
         (throw (ex-info "ffprobe failed" shell-result)))
       (let [result (json/parse-string (:out shell-result) true)]
         result))))

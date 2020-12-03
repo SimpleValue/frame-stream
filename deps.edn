@@ -1,4 +1,24 @@
-{:aliases {}
+{:aliases
+ {:aot {:main-opts ["-e" "(compile,'sv.frame-stream.main)"]}
+
+  :native-image
+  {:main-opts ["-m clj.native-image sv.frame-stream.main"
+               "--initialize-at-build-time"
+               ;; optional native image name override
+               "-H:Name=frame-stream-server"
+               "-Dclojure.compiler.direct-linking=true"
+               "-H:EnableURLProtocols=http"
+               "--report-unsupported-elements-at-runtime" ;; ignore native-image build errors
+               "--no-server"
+               "--verbose"
+               "--static"
+               ]
+   :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
+   :extra-deps
+   {clj.native-image
+    {:git/url "https://github.com/taylorwood/clj.native-image.git"
+     :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
+  }
 
  :paths ["src/clj" "resources" "classes"]
 
@@ -11,5 +31,7 @@
         cheshire/cheshire {:mvn/version "5.10.0"}
 
         com.google.guava/guava {:mvn/version "30.0-jre"}
+
+        http-kit {:mvn/version "2.5.0"}
         }
  }
