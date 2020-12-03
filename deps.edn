@@ -33,5 +33,7 @@
         com.google.guava/guava {:mvn/version "30.0-jre"}
 
         http-kit {:mvn/version "2.5.0"}
+
+        com.pngencoder/pngencoder {:mvn/version "0.11.0"}
         }
  }

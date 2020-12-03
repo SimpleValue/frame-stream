@@ -35,7 +35,7 @@
                      default-duration)
    "-ss" (or start-time 0)
    "-i" url
-   "-r" "30" "-f" "rawvideo" "-pix_fmt" "rgba" "-"])
+   "-r" "30" "-f" "rawvideo" "-pix_fmt" "abgr" "-"])
 
 (def bytes-per-pixel
   ;; rgba
@@ -68,10 +68,17 @@
                 :closed)
           (let [frame-bytes (byte-array frame-size)]
             (com.google.common.io.ByteStreams/readFully
-              in
-              frame-bytes)
-            (.put queue
-                  frame-bytes)
+             in
+             frame-bytes)
+            (let [buffered-image (com.pngencoder.PngEncoderBufferedImageConverter/createFrom4ByteAbgr
+                                  frame-bytes
+                                  (:width params)
+                                  (:height params))
+                  png-bytes (-> (com.pngencoder.PngEncoder.)
+                                (.withBufferedImage buffered-image)
+                                (.toBytes))]
+              (.put queue
+                    png-bytes))
             (recur)))))
     {:process process
      :queue queue}))
@@ -154,7 +161,7 @@
               (swap! state update :ffmpeg-processes dissoc uuid)
               nil)
             (-> {:status 200
-                 :headers {"Content-Type" "application/octet-stream"}
+                 :headers {"Content-Type" "image/png"}
                  :body frame-bytes}
                 (add-cors-header))))))))
 
