@@ -29,25 +29,3 @@
         (throw (ex-info "ffprobe failed" shell-result)))
       (let [result (json/parse-string (:out shell-result) true)]
         result))))
-
-(defn acceptable-mp4?
-  [ffprobe-result]
-  (let [video-stream (some (fn [stream]
-                             (when (= (:codec_type stream)
-                                      "video")
-                               stream))
-                           (:streams ffprobe-result))]
-    (and
-      (str/includes? (get-in ffprobe-result
-                             [:format :format_name])
-                     "mp4")
-      (= (:codec_name video-stream)
-         "h264")
-      (= (:pix_fmt video-stream)
-         "yuv420p"))))
-
-(comment
-  (ffprobe "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
-
-  (acceptable-mp4? (ffprobe "a.mp4"))
-  )
