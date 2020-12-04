@@ -181,9 +181,10 @@
                 :get)
              (= (:uri request)
                 "/frame-stream/health"))
-    {:status 200
-     :headers {"Content-Type" "text/plain"}
-     :body "ok (frame-stream-server)"}))
+    (-> {:status 200
+         :headers {"Content-Type" "text/plain"}
+         :body "ok (frame-stream-server)"}
+        (add-cors-header))))
 
 (defn ring-handler
   [request]
