@@ -37,13 +37,18 @@
    org.bytedeco.ffmpeg.ffmpeg))
 
 (defn ffmpeg-command
-  [{:keys [url start-time duration]}]
+  [{:keys [url start-time duration format]}]
   [(ffmpeg-path)
    "-t" (or duration
             default-duration)
    "-ss" (or start-time 0)
    "-i" url
-   "-r" "30" "-f" "rawvideo" "-pix_fmt" "abgr" "-"])
+   "-r" "30"
+   "-f" "rawvideo"
+   "-pix_fmt" (if (= format "png")
+                "abgr"
+                "rgba")
+   "-"])
 
 (def bytes-per-pixel
   ;; rgba
