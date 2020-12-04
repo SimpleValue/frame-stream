@@ -3,7 +3,8 @@
             [sv.frame-stream.ffprobe :as ffprobe]
             [ring.middleware.params :as m]
             [cheshire.core :as json]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 
@@ -174,14 +175,25 @@
     (-> {:status 200}
         (add-cors-header))))
 
+(defn health-handler
+  [request]
+  (when (and (= (:request-method request)
+                :get)
+             (= (:uri request)
+                "/frame-stream/health"))
+    {:status 200
+     :headers {"Content-Type" "text/plain"}
+     :body "ok (frame-stream-server)"}))
+
 (defn ring-handler
   [request]
   (some
-    (fn [handler]
-      (handler request))
-    [cors-preflight-handler
-     start-handler
-     next-frame-handler]))
+   (fn [handler]
+     (handler request))
+   [cors-preflight-handler
+    start-handler
+    next-frame-handler
+    health-handler]))
 
 (comment
   (println "curl -d '" (pr-str {:url url}) "' " "http://localhost:8080/frame-stream/start")
