@@ -8,6 +8,12 @@
 ;; Wraps the ffprobe command line tool of the ffmpeg package that
 ;; provides a lot of information about video and image files.
 
+(defn ffprobe-path
+  "See: https://github.com/bytedeco/javacpp-presets/blob/master/ffmpeg/src/main/java/org/bytedeco/ffmpeg/ffprobe.java"
+  []
+  (org.bytedeco.javacpp.Loader/load
+   org.bytedeco.ffmpeg.ffprobe))
+
 (defn ffprobe
   "Invokes ffprobe on the given `input` (File or URL string) and returns
    the ffprobe output as a clojure map."
@@ -16,7 +22,7 @@
                               input)
                  (.getAbsolutePath input)
                  input)
-        args ["ffprobe"
+        args [(ffprobe-path)
               "-v"
               "quiet"
               "-print_format"

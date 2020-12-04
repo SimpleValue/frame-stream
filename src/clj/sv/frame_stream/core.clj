@@ -30,10 +30,17 @@
 (def default-duration
   20)
 
+(defn ffmpeg-path
+  "See: https://github.com/bytedeco/javacpp-presets/blob/master/ffmpeg/src/main/java/org/bytedeco/ffmpeg/ffmpeg.java"
+  []
+  (org.bytedeco.javacpp.Loader/load
+   org.bytedeco.ffmpeg.ffmpeg))
+
 (defn ffmpeg-command
   [{:keys [url start-time duration]}]
-  ["ffmpeg" "-t" (or duration
-                     default-duration)
+  [(ffmpeg-path)
+   "-t" (or duration
+            default-duration)
    "-ss" (or start-time 0)
    "-i" url
    "-r" "30" "-f" "rawvideo" "-pix_fmt" "abgr" "-"])

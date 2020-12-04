@@ -35,5 +35,8 @@
         http-kit {:mvn/version "2.5.0"}
 
         com.pngencoder/pngencoder {:mvn/version "0.11.0"}
+
+        org.bytedeco/ffmpeg {:mvn/version "4.3.1-1.5.4"}
+        org.bytedeco/ffmpeg-platform {:mvn/version "4.3.1-1.5.4"}
         }
  }
