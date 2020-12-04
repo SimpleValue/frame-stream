@@ -167,8 +167,10 @@
 
 (defn cors-preflight-handler
   [request]
-  (when (= (:request-method request)
-           :options)
+  (when (and (= (:request-method request)
+                :options)
+             (str/starts-with? (:uri request)
+                               "/frame-stream/"))
     (-> {:status 200}
         (add-cors-header))))
 
