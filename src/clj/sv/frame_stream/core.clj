@@ -60,7 +60,7 @@
   )
 
 (defn ffmpeg!
-  [{:keys [url] :as params}]
+  [{:keys [url format] :as params}]
   (let [frame-size (calc-frame-size params)
         in ^java.io.InputStream (java.io.PipedInputStream.)
         out (java.io.PipedOutputStream. in)
@@ -78,15 +78,19 @@
             (com.google.common.io.ByteStreams/readFully
              in
              frame-bytes)
-            (let [buffered-image (com.pngencoder.PngEncoderBufferedImageConverter/createFrom4ByteAbgr
-                                  frame-bytes
-                                  (:width params)
-                                  (:height params))
-                  png-bytes (-> (com.pngencoder.PngEncoder.)
-                                (.withBufferedImage buffered-image)
-                                (.toBytes))]
+            (if (= format "png")
+              (let [buffered-image (com.pngencoder.PngEncoderBufferedImageConverter/createFrom4ByteAbgr
+                                    frame-bytes
+                                    (:width params)
+                                    (:height params))
+                    png-bytes (-> (com.pngencoder.PngEncoder.)
+                                  (.withBufferedImage buffered-image)
+                                  (.toBytes))]
+                (.put queue
+                      png-bytes))
+              ;; raw
               (.put queue
-                    png-bytes))
+                    frame-bytes))
             (recur)))))
     {:process process
      :queue queue}))
@@ -137,6 +141,8 @@
              [:ffmpeg-processes
               uuid]
              (merge
+              (select-keys params
+                           [:format])
               video-metadata
               (ffmpeg! (merge params
                               video-metadata))))
@@ -169,7 +175,10 @@
               (swap! state update :ffmpeg-processes dissoc uuid)
               nil)
             (-> {:status 200
-                 :headers {"Content-Type" "image/png"}
+                 :headers {"Content-Type" (if (= (:format ffmpeg-process)
+                                                 "png")
+                                            "image/png"
+                                            "application/octet-stream")}
                  :body frame-bytes}
                 (add-cors-header))))))))
 
