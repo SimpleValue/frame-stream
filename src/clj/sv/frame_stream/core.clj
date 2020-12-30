@@ -64,6 +64,14 @@
   ;; frames.
   )
 
+(defn gzip
+  [byte-array]
+  (let [bao (java.io.ByteArrayOutputStream.)]
+    (with-open [out (java.util.zip.GZIPOutputStream. bao)]
+      (io/copy byte-array
+               out))
+    (.toByteArray bao)))
+
 (defn ffmpeg!
   [{:keys [url format] :as params}]
   (let [frame-size (calc-frame-size params)
@@ -92,10 +100,10 @@
                                   (.withBufferedImage buffered-image)
                                   (.toBytes))]
                 (.put queue
-                      png-bytes))
+                      (gzip png-bytes)))
               ;; raw
               (.put queue
-                    frame-bytes))
+                    (gzip frame-bytes)))
             (recur)))))
     {:process process
      :queue queue}))
@@ -183,7 +191,9 @@
                  :headers {"Content-Type" (if (= (:format ffmpeg-process)
                                                  "png")
                                             "image/png"
-                                            "application/octet-stream")}
+                                            "application/octet-stream")
+                           "Content-Encoding" "gzip"
+                           "Connection" "Keep-Alive"}
                  :body frame-bytes}
                 (add-cors-header))))))))
 
